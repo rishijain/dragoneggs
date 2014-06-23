@@ -56,7 +56,7 @@ class Egg
     @y = y
     @w = 10
     @h = 20
-    @image = Gosu::Image.new(window, 'red-balloon.png', false)
+    @image = Gosu::Image.new(window, 'bad_egg.png', false)
   end
 
   def draw
@@ -75,7 +75,7 @@ class Basket
     @y = y
     @w = 10
     @h = 20
-    @image = Gosu::Image.new(window, 'red-balloon.png', false)
+    @image = Gosu::Image.new(window, 'basket.png', false)
   end
 
   def draw
