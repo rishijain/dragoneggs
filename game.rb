@@ -9,7 +9,7 @@ class Game < Gosu::Window
     @eggs = []
     EGGCOUNT.times {|d| @eggs << Egg.new(self, 400*d + 400, 100)}
     @rings = []
-    BASKETCOUNT.times  {|d| @rings << Basket.new(self, 400*d + 600, 500)}
+    BASKETCOUNT.times  {|d| @rings << Basket.new(self, 400*d + 600, 500 - 10*rand(20))}
     @fall_count = 0
     @bg = Gosu::Image.new self, 'cloud.jpg'
   end
@@ -38,7 +38,7 @@ class Game < Gosu::Window
       @eggs.delete current_egg
     end
 
-    @rings.each {|d| d.x = d.x - 7}
+    @rings.each {|d| d.x = d.x - 4}
   end
 
   def free_fall_completed?(egg)
