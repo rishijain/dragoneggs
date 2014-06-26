@@ -12,6 +12,7 @@ class Game < Gosu::Window
     BASKETCOUNT.times  {|d| @rings << Basket.new(self, 400*d + 600, 500 - 10*rand(20))}
     @fall_count = 0
     @bg = Gosu::Image.new self, 'cloud.jpg'
+    @score = 0
   end
 
   def draw
@@ -38,18 +39,31 @@ class Game < Gosu::Window
       @eggs.delete current_egg
     end
 
-    @rings.each {|d| d.x = d.x - 4}
+    @rings.each do |d| 
+      d.x = d.x - 4
+      if egg_into_basket(current_egg, d) && !current_egg.already_counted
+        current_egg.already_counted = true
+        @score += 1 
+      end
+    end
   end
 
   def free_fall_completed?(egg)
     egg.y > 550
+  end
+
+  def egg_into_basket(egg, basket)
+    basket.x <= egg.x &&
+    (egg.x-basket.x).between?(0, 35) &&
+    egg.y <= basket.y &&
+    (basket.y - egg.y).between?(0, 15)
   end
 end
 
 
 class Egg 
   
-  attr_accessor :free_fall, :x, :y, :w, :h
+  attr_accessor :free_fall, :x, :y, :w, :h, :already_counted
 
   def initialize(window, x, y)
     @x = x
