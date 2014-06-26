@@ -22,8 +22,9 @@ class Game < Gosu::Window
   end
 
   def update
-    current_egg = @eggs.select {|d| d if d.x < 750}[0]
-    current_egg.y = current_egg.y + GRAVITY if current_egg.free_fall
+    current_egg = @eggs[@fall_count]
+    @eggs.each {|d| d.x = d.x - 4 if d.already_counted}
+    current_egg.y = current_egg.y + GRAVITY if current_egg.free_fall 
     if button_down?(Gosu::KbSpace)
       current_egg.free_fall = true
     elsif button_down?(Gosu::KbLeft)
@@ -33,23 +34,23 @@ class Game < Gosu::Window
     end
 
     if free_fall_completed?(current_egg)
-      @fall_count += 1
+      @fall_count += 1 
       next_egg = @eggs[@eggs.index(current_egg) + 1]
       next_egg.x = next_egg.x - (400 * @fall_count)
-      @eggs.delete current_egg
     end
 
     @rings.each do |d| 
       d.x = d.x - 4
       if egg_into_basket(current_egg, d) && !current_egg.already_counted
         current_egg.already_counted = true
+        current_egg.free_fall = false
         @score += 1 
       end
     end
   end
 
   def free_fall_completed?(egg)
-    egg.y > 550
+    egg.y > 550 || egg.already_counted
   end
 
   def egg_into_basket(egg, basket)
