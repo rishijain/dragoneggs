@@ -19,6 +19,7 @@ class Game < Gosu::Window
     @logo = Gosu::Image.new self, 'logo.png'
     @score_message = Gosu::Image.new self, 'score_message.png'
     @score_value = Gosu::Font.new(self, Gosu::default_font_name, 35)
+    @game_track = Gosu::Song.new(self, "gametrack.mp3")
   end
 
   def draw
@@ -31,6 +32,7 @@ class Game < Gosu::Window
   end
 
   def update
+    @game_track.play(true)
     current_egg = @eggs[@fall_count]
     @eggs.each {|d| d.x = d.x - 4 if d.already_counted}
     current_egg.y = current_egg.y + GRAVITY if current_egg.free_fall 
