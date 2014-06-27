@@ -1,8 +1,11 @@
 require 'gosu'
+
 EGGCOUNT = 10
 GRAVITY = 5
 BASKETCOUNT = 50
+
 class Game < Gosu::Window
+
   def initialize
     super 800, 600, false
     self.caption = 'Drop the f*ing egg.'
@@ -13,12 +16,18 @@ class Game < Gosu::Window
     @fall_count = 0
     @bg = Gosu::Image.new self, 'cloud.jpg'
     @score = 0
+    @logo = Gosu::Image.new self, 'logo.png'
+    @score_message = Gosu::Image.new self, 'score_message.png'
+    @score_value = Gosu::Font.new(self, Gosu::default_font_name, 35)
   end
 
   def draw
     @bg.draw(0, 0, 0)
     @eggs.each {|egg| egg.draw}
     @rings.each {|ring| ring.draw}
+    @score_message.draw(0, 20 ,0)
+    @logo.draw(300, 10, 0)
+    @score_value.draw(@score, 150, 20, 0, 1, 1, 0xff000000)
   end
 
   def update
