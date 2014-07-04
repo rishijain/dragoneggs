@@ -1,8 +1,8 @@
 require 'gosu'
 
-EGGCOUNT = 10
+EGGCOUNT = 100
 GRAVITY = 5
-BASKETCOUNT = 50
+BASKETCOUNT = 500
 
 class Game < Gosu::Window
 
@@ -38,9 +38,9 @@ class Game < Gosu::Window
     current_egg.y = current_egg.y + GRAVITY if current_egg.free_fall 
     if button_down?(Gosu::KbSpace)
       current_egg.free_fall = true
-    elsif button_down?(Gosu::KbLeft)
+    elsif button_down?(Gosu::KbLeft) && current_egg.free_fall != true
       current_egg.x = current_egg.x - 10 if current_egg.x > 100
-    elsif button_down?(Gosu::KbRight)
+    elsif button_down?(Gosu::KbRight) && current_egg.free_fall != true
       current_egg.x = current_egg.x + 10 if current_egg.x < 700
     end
 
@@ -58,6 +58,11 @@ class Game < Gosu::Window
         @score += 1 
       end
     end
+
+    def button_down id
+      close if id == Gosu::KbEscape
+    end
+
   end
 
   def free_fall_completed?(egg)
