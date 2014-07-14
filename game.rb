@@ -1,25 +1,25 @@
 require 'gosu'
-
-EGGCOUNT = 100
-GRAVITY = 5
-BASKETCOUNT = 500
-RINGSPEED = 4
+require 'yaml'
 
 class Game < Gosu::Window
 
   def initialize
-    super 800, 600, false
+    #load all constants
+    @config = YAML.load_file('config.yml')
+
+    super @config['game']['x_par'], @config['game']['y_par'], false
     self.caption = 'Drop the f*ing egg.'
+    
     @bg = Gosu::Image.new self, 'cloud.jpg'
     @logo = Gosu::Image.new self, 'logo.png'
     
     #initialize the eggs
     @eggs = []
-    EGGCOUNT.times {|d| @eggs << Egg.new(self, 400*d + 400, 100)}
+    @config['eggs']['count'].times {|d| @eggs << Egg.new(self, 400*d + 400, 100)}
     
     #initialize the rings
     @rings = []
-    BASKETCOUNT.times  {|d| @rings << Basket.new(self, 400*d + 600, 500 - 10*rand(20))}
+    @config['baskets']['count'].times  {|d| @rings << Basket.new(self, 400*d + 600, 500 - 10*rand(20))}
     
     @fall_count = 0
     @score = 0
@@ -29,68 +29,75 @@ class Game < Gosu::Window
     @game_track = Gosu::Song.new(self, "gametrack.mp3")
   end
 
-  def draw
-    @bg.draw(0, 0, 0)
-    @eggs.each {|egg| egg.draw}
-    @rings.each {|ring| ring.draw}
+  def display_score
     @score_message.draw(0, 20 ,0)
-    @logo.draw(300, 10, 0)
     @score_value.draw(@score, 150, 20, 0, 1, 1, 0xff000000)
   end
 
-  def update
-    @game_track.play(true)
-    current_egg = @eggs[@fall_count]
-    
-    #to move the egg when it falls on the basket
-    @eggs.each {|d| d.x = d.x - RINGSPEED if d.already_counted}
+  def draw_object(objects, object_type = nil)
+    objects.each(&:draw)
+  end
+  
+  def draw_background_and_logo
+    @bg.draw(0, 0, 0)
+    @logo.draw(300, 10, 0)
+  end
 
-    #for the current egg to keep falling
-    current_egg.y = current_egg.y + GRAVITY if current_egg.free_fall 
-    
+  def draw
+    draw_background_and_logo
+    draw_object(@eggs)
+    draw_object(@rings)
+    display_score
+  end
+
+  def get_egg(position)
+    @eggs[position]
+  end
+
+  def update_next_egg_position(position)
+    @fall_count += 1  #the egg has fallen, so increase fall count by 1
+
+    #find the next egg in array which should be new current egg
+    next_egg = get_egg(position + 1)
+
+    #the new current egg should move -400 to come within the visible part of the screen
+    next_egg.x = next_egg.x - (400 * @fall_count)
+  end
+
+  def update_current_egg(egg)
+    egg.y = egg.y + @config['game']['gravity'] if egg.free_fall 
     #when pressed space, current egg should fall
     if button_down?(Gosu::KbSpace)
-      current_egg.free_fall = true
-    
+     egg.free_fall!
     #to move the curret egg left and right only when it is at its starting position 
-    elsif button_down?(Gosu::KbLeft) && current_egg.free_fall != true
-      current_egg.x = current_egg.x - 10 if current_egg.x > 100
-    elsif button_down?(Gosu::KbRight) && current_egg.free_fall != true
-      current_egg.x = current_egg.x + 10 if current_egg.x < 700
+    elsif button_down?(Gosu::KbLeft) && !egg.free_fall
+      egg.x = egg.x - 10 if egg.x > 100
+    elsif button_down?(Gosu::KbRight) && !egg.free_fall
+      egg.x = egg.x + 10 if egg.x < 700
     end
+  end
 
-    #if current egg has fallen off the screen or is into the basket
-    if free_fall_completed?(current_egg)
-      @fall_count += 1 
-
-      #find the next egg in array which should be new current egg
-      next_egg = @eggs[@eggs.index(current_egg) + 1]
-
-      #the new current egg should move -400 to come within the visible part of the screen
-      next_egg.x = next_egg.x - (400 * @fall_count)
-    end
-
+  def update_rings(current_egg)
     @rings.each do |d| 
 
       #the ring should always keep moving to left
-      d.x = d.x - RINGSPEED
+      d.x = d.x - @config['baskets']['speed']
 
       #check the egg is fallen into basket only if current egg is not counted (i.e not in the basket already)
-      if egg_into_basket(current_egg, d) && !current_egg.already_counted
-        current_egg.already_counted = true
+      if !current_egg.has_fallen_into_a_basket && egg_into_basket(current_egg, d)
+        current_egg.has_fallen_into_a_basket = true
         current_egg.free_fall = false
         @score += 1 
       end
     end
-
-    def button_down id
-      close if id == Gosu::KbEscape
-    end
-
+  end
+  
+  def button_down(id)
+    close if id == Gosu::KbEscape
   end
 
   def free_fall_completed?(egg)
-    egg.y > 550 || egg.already_counted
+    egg.y > 550 || egg.has_fallen_into_a_basket
   end
 
   def egg_into_basket(egg, basket)
@@ -99,12 +106,33 @@ class Game < Gosu::Window
     egg.y <= basket.y &&
     (basket.y - egg.y).between?(0, 15)
   end
+
+  def update
+    #play the gametrack on loop
+    @game_track.play(true)
+
+    #find current egg and current position
+    current_egg = get_egg(@fall_count)
+    current_position = @fall_count
+    
+    #move the egg along with the basket when it falls upon one
+    @eggs.each {|d| d.x = d.x - @config['baskets']['speed'] if d.has_fallen_into_a_basket}
+
+    #check for user input 
+    update_current_egg(current_egg)
+
+    #if current egg has fallen off the screen or is into the basket
+    update_next_egg_position(@fall_count) if free_fall_completed?(current_egg)
+    
+    #update the rign state
+    update_rings(current_egg)
+  end
 end
 
 
 class Egg 
   
-  attr_accessor :free_fall, :x, :y, :w, :h, :already_counted
+  attr_accessor :free_fall, :x, :y, :w, :h, :has_fallen_into_a_basket
 
   def initialize(window, x, y)
     @x = x
@@ -119,6 +147,10 @@ class Egg
   end
 
   def update
+  end
+
+  def free_fall!
+    self.free_fall = true
   end
 end
 

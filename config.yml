@@ -1,0 +1,14 @@
+game:
+  x_par: 800
+  y_par: 600
+  gravity: 5
+
+eggs:
+  count: 100
+  
+  
+baskets:
+  count: 500  
+  speed: 4
+
+
